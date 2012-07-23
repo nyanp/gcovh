@@ -1,3 +1,5 @@
+#pragma once 
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -267,7 +269,7 @@ private:
 	FILE *fp;
 };
 
-parsed_source parse (const std::string& path) {
+parsed_source parse (const char* path) {
 	std::ifstream ifs(path);
 	std::string input;
 	parser p;
@@ -294,14 +296,4 @@ void write(const parsed_source& src, const std::string& path) {
 	w.write_footer(src);
 }
 
-}
-
-int main (int argc, char *argv[]) {
-	if (argc != 2) {
-		std::cout << "error: invalid arg" << std::endl;
-		exit(-1);
-	}
-	std::string path = argv[1];
-	gcovh::parsed_source content = gcovh::parse(path);
-	gcovh::write(content, path + ".html");
 }

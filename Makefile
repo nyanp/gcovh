@@ -1,0 +1,2 @@
+CPPFLAGS=-lstdc++
+all : gcovh
