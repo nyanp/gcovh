@@ -66,7 +66,7 @@ public:
 	}
 
 	bool executed(void) const {
-		return execution_count_.c_str() != "0";
+		return execution_count_[0] != '#';
 	}
 
 	int number(void) const {
@@ -89,7 +89,8 @@ typedef std::vector<parsed_line> parsed_lines;
 class parsed_source {
 public:
 	parsed_source(void) 
-		: runs(0), programs(0), lines_executed(0), lines_total(0), line_coverage(0.0) {}
+		: source_file("N/A"), graph_file("N/A"), data_file("N/A"),
+		runs(0), programs(0), lines_executed(0), lines_total(0), line_coverage(0.0) {}
 
 	void add (const parsed_line& line) {
 		contents.push_back(line);
@@ -226,7 +227,7 @@ private:
 		line_t line = split(s, ':');
 
 		if (line.size() < 3) {
-			throw std::domain_error("invalid format");
+			return; //thru
 		}
 
 		if (is_executable_line(line)) {
