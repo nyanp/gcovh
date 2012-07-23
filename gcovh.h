@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <map>
 #include <string>
 #include <cassert>
 #include <sstream>
@@ -257,13 +258,13 @@ private:
 	parsed_source src;
 };
 
-class writer {
+class detail_writer {
 public:
-	writer(const std::string& path) {
+	detail_writer(const parsed_source& src, const std::string& path) : src(src) {
 		fp = fopen(path.c_str(), "w");
 	}
 
-	~writer(void) {
+	~detail_writer(void) {
 		fclose(fp);
 	}
 
@@ -271,22 +272,22 @@ public:
 		return fp == 0;
 	}
 
-	void write_header(const parsed_source& src) {
+	void write_header(void) {
 		write_header_tag(src.source());
 		write_summary(src);
 	}
 
-	void write_content(const parsed_lines& content) {
+	void write_content(void) {
 		fprintf(fp, 
 			"<h1>Source</h1>"
 			"  <pre class=\"source\">");
-		for (parsed_lines::const_iterator it = content.begin(), end = content.end(); it != end; ++it) {
+		for (parsed_lines::const_iterator it = src.all().begin(), end = src.all().end(); it != end; ++it) {
 			write_oneline(*it);
 		}
 		fprintf(fp, "</pre>");
 	}
 
-	void write_footer(const parsed_source& src) {
+	void write_footer(void) {
 
 	}
 
@@ -321,6 +322,36 @@ private:
 			);
 	}
 
+	parsed_source src;
+	FILE *fp;
+};
+
+class summary_writer {
+public:
+	typedef std::map<std::string, parsed_source> sources_t;
+
+	summary_writer(const sources_t& src, const std::string& path) : src(src) {
+		fp = fopen(path.c_str(), "w");
+	}
+
+	~summary_writer(void) {
+		fclose(fp);
+	}
+
+	void write_header(void) {
+		// not implemented
+	}
+
+	void write_content(void) {
+
+	}
+
+	void write_footer(void) {
+
+	}
+
+private:
+	sources_t src;
 	FILE *fp;
 };
 
@@ -354,15 +385,15 @@ parsed_source parse (const char* path) {
  * @param path output filename
  */
 void write(const parsed_source& src, const std::string& path) {
-	writer w(path);
+	detail_writer w(src, path);
 
 	if (w.fail()) {
 		throw std::invalid_argument("failed to open");
 	}
 
-	w.write_header(src);
-	w.write_content(src.all());
-	w.write_footer(src);
+	w.write_header();
+	w.write_content();
+	w.write_footer();
 }
 
 } // namespace gcovh
