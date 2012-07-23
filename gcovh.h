@@ -6,6 +6,8 @@
 #include <string>
 #include <cassert>
 #include <sstream>
+#include <stdexcept>
+#include <typeinfo>
 
 namespace gcovh {
 
@@ -33,6 +35,10 @@ std::string merge(Iter first, Iter last, char sep) {
 	return ret;
 }
 
+std::string trim_begin(const std::string& str) {
+	return str.substr(str.find_first_not_of(' '));
+}
+
 template <typename Targ, typename Src>
 Targ lexical_cast (const Src& arg) {
 	std::stringstream ss;
@@ -48,8 +54,8 @@ class parsed_line {
 public:
 	parsed_line(int line_number, const std::string& content)
 		: line_number_(line_number), is_executable_(false), content_(content), execution_count_("-") {}
-	parsed_line(int line_number, const std::string& content, int execution_count)
-		: line_number_(line_number), is_executable_(true), content_(content), execution_count_(lexical_cast<std::string>(execution_count)) {}
+	parsed_line(int line_number, const std::string& content, const std::string& execution_count)
+		: line_number_(line_number), is_executable_(true), content_(content), execution_count_(execution_count) {}
 
 	const std::string& exec_count(void) const {
 		return execution_count_;
@@ -83,10 +89,10 @@ typedef std::vector<parsed_line> parsed_lines;
 class parsed_source {
 public:
 	parsed_source(void) 
-		: runs(0), programs(0), lines_executed(0), lines_total(0), coverage(0.0) {}
+		: runs(0), programs(0), lines_executed(0), lines_total(0), line_coverage(0.0) {}
 
 	void add (const parsed_line& line) {
-		lines.push_back(line);
+		contents.push_back(line);
 		if (line.executable()) {
 			if (line.executed()) 
 				lines_executed++;
@@ -95,6 +101,52 @@ public:
 		}
 	}
 
+	void set_header(const std::string& tag, const std::string& value) {
+		if (tag == "Source") {
+			source_file = value;
+		} else if (tag == "Graph") {
+			graph_file  = value;
+		} else if (tag == "Data") {
+			data_file   = value;
+		} else if (tag == "Runs") {
+			runs        = lexical_cast<int>(value);
+		} else if (tag == "Programs") {
+			programs   = lexical_cast<int>(value);
+		} else {
+			return; // thru
+		}
+	}
+
+	std::string source(void) const {
+		return source_file;
+	}
+
+	std::string graph(void) const {
+		return graph_file;
+	}
+
+	std::string data(void) const {
+		return data_file;
+	}
+
+	int executed_lines(void) const {
+		return lines_executed;
+	}
+
+	int total_lines(void) const {
+		return lines_total;
+	}
+
+	double coverage(void) const {
+		return line_coverage;
+	}
+
+	const parsed_lines& all(void) const {
+		return contents;
+	}
+
+private:
+
 	std::string   source_file;
 	std::string   graph_file;
 	std::string   data_file;
@@ -102,14 +154,13 @@ public:
 	int           programs;
 	int           lines_executed;
 	int           lines_total;
-	double        coverage;
-	parsed_lines  lines;
+	double        line_coverage;
+	parsed_lines  contents;
 
-private:
 	void update_coverage(void) {
 		if (lines_total == 0)
 			return;
-		coverage = 100.0 * lines_executed / lines_total;
+		line_coverage = 100.0 * lines_executed / lines_total;
 	}
 };
 
@@ -144,8 +195,8 @@ private:
 		return line[0].find('-') == std::string::npos;
 	}
 
-	int get_execution_count(const line_t& line) const {
-		return lexical_cast<int>(line[0]);
+	std::string get_execution_count(const line_t& line) const {
+		return trim_begin(line[0]);
 	}
 
 	int get_line_number(const line_t& line) const {
@@ -167,19 +218,7 @@ private:
 		std::string tag = line[2];
 		std::string value = line[3];
 
-		if (tag == "Source") {
-			src.source_file = value;
-		} else if (tag == "Graph") {
-			src.graph_file  = value;
-		} else if (tag == "Data") {
-			src.data_file   = value;
-		} else if (tag == "Runs") {
-			src.runs        = lexical_cast<int>(value);
-		} else if (tag == "Programs") {
-			src.programs   = lexical_cast<int>(value);
-		} else {
-			
-		}
+		src.set_header(tag, value);
 	}
 
 	void parse_content(const std::string& s) {
@@ -217,7 +256,7 @@ public:
 	}
 
 	void write_header(const parsed_source& src) {
-		write_header_tag(src.source_file);
+		write_header_tag(src.source());
 		write_summary(src);
 	}
 
@@ -250,9 +289,9 @@ private:
 		fprintf(fp,
 			"<h1>Summary</h1>\n"
 			"  <p>Lines executed:%d of %d (%.2f&#37;)</p>\n",
-			src.lines_executed,
-			src.lines_total,
-			src.coverage);
+			src.executed_lines(),
+			src.total_lines(),
+			src.coverage());
 	}
 
 	void write_oneline(const parsed_line& line) {
@@ -292,7 +331,7 @@ void write(const parsed_source& src, const std::string& path) {
 	}
 
 	w.write_header(src);
-	w.write_content(src.lines);
+	w.write_content(src.all());
 	w.write_footer(src);
 }
 
