@@ -153,7 +153,6 @@ public:
 	}
 
 private:
-
 	std::string   source_file;
 	std::string   graph_file;
 	std::string   data_file;
@@ -176,22 +175,29 @@ private:
 
 class parser {
 public:
-	parser(void) : is_header(true) {
+	parser(void) : is_header(true), is_error(false) {}
 
-	}
-
-	void parse(const std::string& s) {
+	bool parse(const std::string& s) {
 		if (is_header_line(s)) {
-			assert(is_header == true);
+			if (is_header == false)
+				is_error = true;
 			parse_header(s);
 		} else {
 			is_header = false;
 			parse_content(s);
 		}
+		return is_error;
 	}
 
 	parsed_source result(void) const {
+		if (is_error) {
+			throw std::domain_error("invalid result"); // throw if getting result from error state
+		}
 		return src;
+	}
+
+	bool error(void) const {
+		return is_error;
 	}
 
 private:
@@ -222,7 +228,7 @@ private:
 		line_t line = detail::split(s, ':');
 
 		if (line.size() < 4) {
-			throw std::domain_error("invalid format");
+			return;
 		}
 
 		std::string tag = line[2];
@@ -244,10 +250,10 @@ private:
 		} else {
 			src.add(parsed_line(get_line_number(line), get_source_line_text(line)));
 		}
-		
 	}
 
 	bool is_header;
+	bool is_error;
 	parsed_source src;
 };
 
