@@ -11,6 +11,8 @@
 
 namespace gcovh {
 
+namespace detail {
+
 std::vector<std::string> split(const std::string& s, char sep) {
 	std::vector<std::string> ret;
 
@@ -49,6 +51,11 @@ Targ lexical_cast (const Src& arg) {
 
 	return ret;
 }
+
+} // namespace detail
+
+//-------------------------------------------------
+// struct of parsed-file
 
 class parsed_line {
 public:
@@ -103,19 +110,18 @@ public:
 	}
 
 	void set_header(const std::string& tag, const std::string& value) {
-		if (tag == "Source") {
+		if (tag == "Source") 
 			source_file = value;
-		} else if (tag == "Graph") {
+		else if (tag == "Graph")
 			graph_file  = value;
-		} else if (tag == "Data") {
+		else if (tag == "Data")
 			data_file   = value;
-		} else if (tag == "Runs") {
-			runs        = lexical_cast<int>(value);
-		} else if (tag == "Programs") {
-			programs   = lexical_cast<int>(value);
-		} else {
+		else if (tag == "Runs")
+			runs        = detail::lexical_cast<int>(value);
+		else if (tag == "Programs")
+			programs    = detail::lexical_cast<int>(value);
+		else
 			return; // thru
-		}
 	}
 
 	std::string source(void) const {
@@ -165,6 +171,9 @@ private:
 	}
 };
 
+//-------------------------------------------------
+// parser/writer
+
 class parser {
 public:
 	parser(void) : is_header(true) {
@@ -197,20 +206,20 @@ private:
 	}
 
 	std::string get_execution_count(const line_t& line) const {
-		return trim_begin(line[0]);
+		return detail::trim_begin(line[0]);
 	}
 
 	int get_line_number(const line_t& line) const {
-		return lexical_cast<int>(line[1]);
+		return detail::lexical_cast<int>(line[1]);
 	}
 
 	std::string get_source_line_text(const line_t& line) const {
-		return merge(line.begin() + 2, line.end(), ':');
+		return detail::merge(line.begin() + 2, line.end(), ':');
 	}
 
 	void parse_header(const std::string& s) {
 		// -:0:<tag>:<value>
-		line_t line = split(s, ':');
+		line_t line = detail::split(s, ':');
 
 		if (line.size() < 4) {
 			throw std::domain_error("invalid format");
@@ -224,7 +233,7 @@ private:
 
 	void parse_content(const std::string& s) {
 		// <execution_count>:<line_number>:<source line text>
-		line_t line = split(s, ':');
+		line_t line = detail::split(s, ':');
 
 		if (line.size() < 3) {
 			return; //thru
@@ -309,6 +318,14 @@ private:
 	FILE *fp;
 };
 
+//-------------------------------------------------
+// 
+
+/**
+ * parse a content of .gcov file
+ *
+ * @param path filename
+ */
 parsed_source parse (const char* path) {
 	std::ifstream ifs(path);
 	std::string input;
@@ -324,6 +341,12 @@ parsed_source parse (const char* path) {
 	return p.result();
 }
 
+/**
+ * generage html report file from parsed_source
+ *
+ * @param src  report source
+ * @param path output filename
+ */
 void write(const parsed_source& src, const std::string& path) {
 	writer w(path);
 
@@ -336,4 +359,4 @@ void write(const parsed_source& src, const std::string& path) {
 	w.write_footer(src);
 }
 
-}
+} // namespace gcovh
