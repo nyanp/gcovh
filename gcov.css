@@ -26,245 +26,6 @@ a:active
   text-decoration: underline;
 }
 
-/* All views: main title format */
-td.title
-{
-  text-align: center;
-  padding-bottom: 10px;
-  font-family: sans-serif;
-  font-size: 20pt;
-  font-style: italic;
-  font-weight: bold;
-}
-
-/* All views: header item format */
-td.headerItem
-{
-  text-align: right;
-  padding-right: 6px;
-  font-family: sans-serif;
-  font-weight: bold;
-  vertical-align: top;
-  white-space: nowrap;
-}
-
-/* All views: header item value format */
-td.headerValue
-{
-  text-align: left;
-  color: #284FA8;
-  font-family: sans-serif;
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-/* All views: header item coverage table heading */
-td.headerCovTableHead
-{
-  text-align: center;
-  padding-right: 6px;
-  padding-left: 6px;
-  padding-bottom: 0px;
-  font-family: sans-serif;
-  font-size: 80%;
-  white-space: nowrap;
-}
-
-/* All views: header item coverage table entry */
-td.headerCovTableEntry
-{
-  text-align: right;
-  color: #284FA8;
-  font-family: sans-serif;
-  font-weight: bold;
-  white-space: nowrap;
-  padding-left: 12px;
-  padding-right: 4px;
-  background-color: #DAE7FE;
-}
-
-/* All views: header item coverage table entry for high coverage rate */
-td.headerCovTableEntryHi
-{
-  text-align: right;
-  color: #000000;
-  font-family: sans-serif;
-  font-weight: bold;
-  white-space: nowrap;
-  padding-left: 12px;
-  padding-right: 4px;
-  background-color: #A7FC9D;
-}
-
-/* All views: header item coverage table entry for medium coverage rate */
-td.headerCovTableEntryMed
-{
-  text-align: right;
-  color: #000000;
-  font-family: sans-serif;
-  font-weight: bold;
-  white-space: nowrap;
-  padding-left: 12px;
-  padding-right: 4px;
-  background-color: #FFEA20;
-}
-
-/* All views: header item coverage table entry for ow coverage rate */
-td.headerCovTableEntryLo
-{
-  text-align: right;
-  color: #000000;
-  font-family: sans-serif;
-  font-weight: bold;
-  white-space: nowrap;
-  padding-left: 12px;
-  padding-right: 4px;
-  background-color: #FF0000;
-}
-
-/* All views: header legend value for legend entry */
-td.headerValueLeg
-{
-  text-align: left;
-  color: #000000;
-  font-family: sans-serif;
-  font-size: 80%;
-  white-space: nowrap;
-  padding-top: 4px;
-}
-
-/* All views: color of horizontal ruler */
-td.ruler
-{
-  background-color: #6688D4;
-}
-
-/* All views: version string format */
-td.versionInfo
-{
-  text-align: center;
-  padding-top: 2px;
-  font-family: sans-serif;
-  font-style: italic;
-}
-
-/* Directory view/File view (all)/Test case descriptions:
-   table headline format */
-td.tableHead
-{
-  text-align: center;
-  color: #FFFFFF;
-  background-color: #6688D4;
-  font-family: sans-serif;
-  font-size: 120%;
-  font-weight: bold;
-  white-space: nowrap;
-  padding-left: 4px;
-  padding-right: 4px;
-}
-
-span.tableHeadSort
-{
-  padding-right: 4px;
-}
-
-/* Directory view/File view (all): filename entry format */
-td.coverFile
-{
-  text-align: left;
-  padding-left: 10px;
-  padding-right: 20px; 
-  color: #284FA8;
-  background-color: #DAE7FE;
-  font-family: monospace;
-}
-
-/* Directory view/File view (all): bar-graph entry format*/
-td.coverBar
-{
-  padding-left: 10px;
-  padding-right: 10px;
-  background-color: #DAE7FE;
-}
-
-/* Directory view/File view (all): bar-graph outline color */
-td.coverBarOutline
-{
-  background-color: #000000;
-}
-
-/* Directory view/File view (all): percentage entry for files with
-   high coverage rate */
-td.coverPerHi
-{
-  text-align: right;
-  padding-left: 10px;
-  padding-right: 10px;
-  background-color: #A7FC9D;
-  font-weight: bold;
-  font-family: sans-serif;
-}
-
-/* Directory view/File view (all): line count entry for files with
-   high coverage rate */
-td.coverNumHi
-{
-  text-align: right;
-  padding-left: 10px;
-  padding-right: 10px;
-  background-color: #A7FC9D;
-  white-space: nowrap;
-  font-family: sans-serif;
-}
-
-/* Directory view/File view (all): percentage entry for files with
-   medium coverage rate */
-td.coverPerMed
-{
-  text-align: right;
-  padding-left: 10px;
-  padding-right: 10px;
-  background-color: #FFEA20;
-  font-weight: bold;
-  font-family: sans-serif;
-}
-
-/* Directory view/File view (all): line count entry for files with
-   medium coverage rate */
-td.coverNumMed
-{
-  text-align: right;
-  padding-left: 10px;
-  padding-right: 10px;
-  background-color: #FFEA20;
-  white-space: nowrap;
-  font-family: sans-serif;
-}
-
-/* Directory view/File view (all): percentage entry for files with
-   low coverage rate */
-td.coverPerLo
-{
-  text-align: right;
-  padding-left: 10px;
-  padding-right: 10px;
-  background-color: #FF0000;
-  font-weight: bold;
-  font-family: sans-serif;
-}
-
-/* Directory view/File view (all): line count entry for files with
-   low coverage rate */
-td.coverNumLo
-{
-  text-align: right;
-  padding-left: 10px;
-  padding-right: 10px;
-  background-color: #FF0000;
-  white-space: nowrap;
-  font-family: sans-serif;
-}
-
 /* File view (all): "show/hide details" link format */
 a.detail:link
 {
@@ -286,85 +47,6 @@ a.detail:active
   font-size:80%;
 }
 
-/* File view (detail): test name entry */
-td.testName
-{
-  text-align: right;
-  padding-right: 10px;
-  background-color: #DAE7FE;
-  font-family: sans-serif;
-}
-
-/* File view (detail): test percentage entry */
-td.testPer
-{
-  text-align: right;
-  padding-left: 10px;
-  padding-right: 10px; 
-  background-color: #DAE7FE;
-  font-family: sans-serif;
-}
-
-/* File view (detail): test lines count entry */
-td.testNum
-{
-  text-align: right;
-  padding-left: 10px;
-  padding-right: 10px; 
-  background-color: #DAE7FE;
-  font-family: sans-serif;
-}
-
-/* Test case descriptions: test name format*/
-dt
-{
-  font-family: sans-serif;
-  font-weight: bold;
-}
-
-/* Test case descriptions: description table body */
-td.testDescription
-{
-  padding-top: 10px;
-  padding-left: 30px;
-  padding-bottom: 10px;
-  padding-right: 30px;
-  background-color: #DAE7FE;
-}
-
-/* Source code view: function entry */
-td.coverFn
-{
-  text-align: left;
-  padding-left: 10px;
-  padding-right: 20px; 
-  color: #284FA8;
-  background-color: #DAE7FE;
-  font-family: monospace;
-}
-
-/* Source code view: function entry zero count*/
-td.coverFnLo
-{
-  text-align: right;
-  padding-left: 10px;
-  padding-right: 10px;
-  background-color: #FF0000;
-  font-weight: bold;
-  font-family: sans-serif;
-}
-
-/* Source code view: function entry nonzero count*/
-td.coverFnHi
-{
-  text-align: right;
-  padding-left: 10px;
-  padding-right: 10px;
-  background-color: #DAE7FE;
-  font-weight: bold;
-  font-family: sans-serif;
-}
-
 /* Source code view: source code format */
 pre.source
 {
@@ -380,7 +62,6 @@ span.lineNum
 }
 
 /* Source code view: format for lines which were executed */
-td.lineCov,
 span.lineCov
 {
   background-color: #CAD7FE;
@@ -396,7 +77,6 @@ span.coverLegendCov
 }
 
 /* Source code view: format for lines which were not executed */
-td.lineNoCov,
 span.lineNoCov
 {
   background-color: #FF6230;
@@ -516,4 +196,39 @@ span.coverLegendCovHi
   padding-right: 10px;
   padding-top: 2px;
   background-color: #A7FC9D;
+}
+
+.progress {
+        background: #ffffff;
+        width: 100px;
+        border: 1px solid #999;
+}
+
+.bar {
+        background: #ddffbb;
+        height: 20px;
+        margin: 2px;
+}
+
+table {
+    width: 500px;
+    border: 1px #E3E3E3 solid;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+table th {
+    padding: 5px;
+    border: #E3E3E3 solid;
+    border-width: 0 0 1px 1px;
+    background: #F5F5F5;
+    font-weight: bold;
+    line-height: 120%;
+    text-align: center;
+}
+table td {
+    padding: 5px;
+    border: 1px #E3E3E3 solid;
+    border-width: 0 0 1px 1px;
+    text-align: center;
 }

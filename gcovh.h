@@ -339,11 +339,43 @@ public:
 	}
 
 	void write_header(void) {
-		// not implemented
+		fprintf(fp,
+			"<head>\n"
+			"  <meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">\n"
+			"  <title>gcov - summary</title>\n"
+			"  <link rel=\"stylesheet\" type=\"text/css\" href=\"gcov.css\">\n"
+			"</head>\n");
 	}
 
 	void write_content(void) {
+		fprintf(fp,
+			"<table>\n"
+			"  <tr>\n"
+			"    <th>FileName</th>\n"
+			"    <th colspan=3>Line Coverage</th>\n"
+			"  </tr>\n");
 
+		for (sources_t::iterator it = src.begin(), end = src.end(); it != end; ++it) {
+			std::string html_file = (*it).first + ".html";
+			const parsed_source& s = (*it).second;
+
+			fprintf(fp,
+				"  <tr>\n"
+				"    <td><a href=\"%s\">%s</a></td>\n"
+				"    <td><div class=\"progress\"><div class=\"bar\" style=\"width:%d&#37;;\"></div></div></td>\n"
+				"    <td>%.2f&#37;</td>\n"
+				"    <td>%d/%d</td>\n"
+				"  </tr>\n",
+				html_file.c_str(),
+				(*it).first.c_str(),
+				(int)(s.coverage()),
+				s.coverage(),
+				s.executed_lines(),
+				s.total_lines());
+		}
+
+		fprintf(fp,
+			"</table>");
 	}
 
 	void write_footer(void) {

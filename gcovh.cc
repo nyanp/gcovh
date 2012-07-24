@@ -27,4 +27,9 @@ int main (int argc, char *argv[]) {
 		gcovh::write((*it).second, (*it).first + ".html");
 	}
 
+	gcovh::summary_writer summary(sources, "index.html");
+
+	summary.write_header();
+	summary.write_content();
+	summary.write_footer();
 }
