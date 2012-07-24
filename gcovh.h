@@ -97,7 +97,11 @@ typedef std::vector<parsed_line> parsed_lines;
 class parsed_source {
 public:
 	parsed_source(void) 
-		: source_file("N/A"), graph_file("N/A"), data_file("N/A"),
+		: parse_file("N/A"), source_file("N/A"), graph_file("N/A"), data_file("N/A"),
+		runs(0), programs(0), lines_executed(0), lines_total(0), line_coverage(0.0) {}
+
+	parsed_source(const std::string& parse_file) 
+		: parse_file(parse_file), source_file("N/A"), graph_file("N/A"), data_file("N/A"),
 		runs(0), programs(0), lines_executed(0), lines_total(0), line_coverage(0.0) {}
 
 	void add (const parsed_line& line) {
@@ -154,6 +158,7 @@ public:
 	}
 
 private:
+	std::string   parse_file;
 	std::string   source_file;
 	std::string   graph_file;
 	std::string   data_file;
@@ -177,6 +182,8 @@ private:
 class parser {
 public:
 	parser(void) : is_header(true), is_error(false) {}
+
+	parser(const std::string& parse_file) : is_header(true), is_error(false), src(parse_file) {}
 
 	bool parse(const std::string& s) {
 		if (is_header_line(s)) {
@@ -398,16 +405,24 @@ private:
 parsed_source parse (const char* path) {
 	std::ifstream ifs(path);
 	std::string input;
-	parser p;
+	parser p(path);
 
-	if (ifs.fail()) {
+	if (ifs.fail()) 
 		throw std::invalid_argument("failed to open");
-	}
 
-	while (std::getline(ifs, input)) {
+	while (std::getline(ifs, input))
 		p.parse(input);
-	}
+
 	return p.result();
+}
+
+std::vector<parsed_source> parse (int num, const char *path[]) {
+	std::vector<parsed_source> sources;
+
+	for (int i = 0; i < num; i++)
+		sources.push_back(parse(path[i]));
+
+	return sources;
 }
 
 /**
@@ -419,9 +434,8 @@ parsed_source parse (const char* path) {
 void write(const parsed_source& src, const std::string& path) {
 	detail_writer w(src, path);
 
-	if (w.fail()) {
+	if (w.fail())
 		throw std::invalid_argument("failed to open");
-	}
 
 	w.write_header();
 	w.write_content();
