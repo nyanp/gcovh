@@ -9,6 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <typeinfo>
+#include <algorithm>
 
 namespace gcovh {
 namespace detail {
@@ -56,6 +57,31 @@ Targ lexical_cast (const Src& arg) {
 		throw std::bad_cast();
 
 	return ret;
+}
+
+std::string replace(std::string src, const std::string& targ, const std::string& repl) {
+	size_t i;
+
+	if (targ.length() == 0)
+		return src;
+
+	while (true) {
+		i = src.find(targ);
+		if (i == std::string::npos) 
+			return src;
+		src.replace(i, targ.length(), repl);
+		i += repl.length();
+	}
+}
+
+std::string escape_for_html(const std::string& base) {
+	std::string escaped = base;
+	escaped = replace(escaped, "&", "&amp");
+	escaped = replace(escaped, "<", "&lt");
+	escaped = replace(escaped, ">", "&gt");
+	escaped = replace(escaped, "\"", "&quot");
+
+	return escaped;
 }
 
 } // namespace detail
@@ -272,6 +298,7 @@ public:
 	void write (const Content& c) {
 		write_common_header(page_title(c));
 		write_content(fp_, c); // template method
+		write_common_footer();
 	}
 
 	~html_generator() {
@@ -281,12 +308,22 @@ public:
 private:
 	void write_common_header(const std::string& page_title) {
 		fprintf(fp_,
+			"<html>"
 			"<head>\n"
 			"  <meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">\n"
 			"  <title>gcov - %s</title>\n"
 			"  <link rel=\"stylesheet\" type=\"text/css\" href=\"gcov.css\">\n"
-			"</head>\n",
+			"</head>\n"
+			"<body>\n"
+			"<div id=\"wrapper\">\n",
 			page_title.c_str());
+	}
+
+	void write_common_footer() {
+		fprintf(fp_, 
+			"</div>\n"
+			"</body>\n"
+			"</html>\n");
 	}
 
 	virtual std::string page_title(const Content& c) = 0;
@@ -312,7 +349,7 @@ private:
 
 	void write_annotated_source(FILE *fp, const coverage_data& cov) {
 		fprintf(fp, 
-			"<h1>Source</h1>\n"
+			"<h2>Source</h2>\n"
 			"  <pre class=\"source\">");
 		for (source_lines::const_iterator it = cov.all().begin(), end = cov.all().end(); it != end; ++it) 
 			write_oneline(fp, *it);
@@ -322,7 +359,7 @@ private:
 
 	void write_linecoverage_summary(FILE *fp, const coverage_data& cov) {
 		fprintf(fp,
-			"<h1>Summary</h1>\n"
+			"<h2>Summary</h2>\n"
 			"  <p>Lines executed:%d of %d (%.2f&#37;)</p>\n",
 			cov.lines_executed(),
 			cov.lines_total(),
@@ -335,7 +372,7 @@ private:
 			line.number(),
 			line.executable() ? (line.executed() ? "<span class = \"lineCov\">" : "<span class = \"lineNoCov\">" ) : "",
 			line.exec_count().c_str(),
-			line.content().c_str(),
+			detail::escape_for_html(line.content()).c_str(),
 			line.executable() ? "</span>" : "");
 	}
 };

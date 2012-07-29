@@ -26,27 +26,6 @@ a:active
   text-decoration: underline;
 }
 
-/* File view (all): "show/hide details" link format */
-a.detail:link
-{
-  color: #B8D0FF;
-  font-size:80%;
-}
-
-/* File view (all): "show/hide details" link - visited format */
-a.detail:visited
-{
-  color: #B8D0FF;
-  font-size:80%;
-}
-
-/* File view (all): "show/hide details" link - activated format */
-a.detail:active
-{
-  color: #FFFFFF;
-  font-size:80%;
-}
-
 /* Source code view: source code format */
 pre.source
 {
@@ -126,78 +105,6 @@ span.branchNoExec
   background-color: #FF6230;
 }
 
-/* Source code view: format for the source code heading line */
-pre.sourceHeading
-{
-  white-space: pre;
-  font-family: monospace;
-  font-weight: bold;
-  margin: 0px;
-}
-
-/* All views: header legend value for low rate */
-td.headerValueLegL
-{
-  font-family: sans-serif;
-  text-align: center;
-  white-space: nowrap;
-  padding-left: 4px;
-  padding-right: 2px;
-  background-color: #FF0000;
-  font-size: 80%;
-}
-
-/* All views: header legend value for med rate */
-td.headerValueLegM
-{
-  font-family: sans-serif;
-  text-align: center;
-  white-space: nowrap;
-  padding-left: 2px;
-  padding-right: 2px;
-  background-color: #FFEA20;
-  font-size: 80%;
-}
-
-/* All views: header legend value for hi rate */
-td.headerValueLegH
-{
-  font-family: sans-serif;
-  text-align: center;
-  white-space: nowrap;
-  padding-left: 2px;
-  padding-right: 4px;
-  background-color: #A7FC9D;
-  font-size: 80%;
-}
-
-/* All views except source code view: legend format for low coverage */
-span.coverLegendCovLo
-{
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-top: 2px;
-  background-color: #FF0000;
-}
-
-/* All views except source code view: legend format for med coverage */
-span.coverLegendCovMed
-{
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-top: 2px;
-  background-color: #FFEA20;
-}
-
-/* All views except source code view: legend format for hi coverage */
-span.coverLegendCovHi
-{
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-top: 2px;
-  background-color: #A7FC9D;
-}
-
 .progress {
         background: #ffffff;
         width: 100px;
@@ -226,9 +133,30 @@ table th {
     line-height: 120%;
     text-align: center;
 }
+
 table td {
     padding: 5px;
     border: 1px #E3E3E3 solid;
     border-width: 0 0 1px 1px;
     text-align: center;
+}
+
+body {
+    text-align: center;
+}
+
+div#wrapper {
+    width: 700px;
+    margin: 0 auto;
+    text-align: left;
+    background: #FFFFFF;
+    border: none; 
+}
+
+h2 {
+    margin-bottom: 1em;
+    padding: 5px 10px;
+    border-bottom: 1px solid #A0A0A0;
+    font-family: helvetica, arial, freesans, clean, sans-serif, monospace;
+    
 }
