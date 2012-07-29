@@ -11,7 +11,6 @@
 #include <typeinfo>
 
 namespace gcovh {
-
 namespace detail {
 
 std::vector<std::string> split(const std::string& s, char sep) {
@@ -38,6 +37,12 @@ std::string merge(Iter first, Iter last, char sep) {
 	return ret;
 }
 
+// foo.bar.c -> foo.bar
+std::string get_filebase(const std::string& filename) {
+	std::vector<std::string> s = split(filename, '.');
+	return merge(s.begin(), s.end() - 1, '.');
+}
+
 std::string trim_begin(const std::string& str) {
 	return str.substr(str.find_first_not_of(' '));
 }
@@ -58,11 +63,11 @@ Targ lexical_cast (const Src& arg) {
 //-------------------------------------------------
 // struct of parsed-file
 
-class parsed_line {
+class source_line {
 public:
-	parsed_line(int line_number, const std::string& content)
+	source_line(int line_number, const std::string& content)
 		: line_number_(line_number), is_executable_(false), content_(content), execution_count_("-") {}
-	parsed_line(int line_number, const std::string& content, const std::string& execution_count)
+	source_line(int line_number, const std::string& content, const std::string& execution_count)
 		: line_number_(line_number), is_executable_(true), content_(content), execution_count_(execution_count) {}
 
 	const std::string& exec_count(void) const {
@@ -92,127 +97,128 @@ private:
 	std::string execution_count_;
 };
 
-typedef std::vector<parsed_line> parsed_lines;
+typedef std::vector<source_line> source_lines;
 
-class parsed_source {
+class coverage_data {
 public:
-	parsed_source(void) 
-		: parse_file("N/A"), source_file("N/A"), graph_file("N/A"), data_file("N/A"),
-		runs(0), programs(0), lines_executed(0), lines_total(0), line_coverage(0.0) {}
+	coverage_data(const std::string& parse_file) 
+		: parse_file_(parse_file), source_file_("N/A"), graph_file_("N/A"), data_file_("N/A"),
+		runs_(0), programs_(0), lines_executed_(0), lines_total_(0), line_coverage_(0.0) {}
 
-	parsed_source(const std::string& parse_file) 
-		: parse_file(parse_file), source_file("N/A"), graph_file("N/A"), data_file("N/A"),
-		runs(0), programs(0), lines_executed(0), lines_total(0), line_coverage(0.0) {}
-
-	void add (const parsed_line& line) {
-		contents.push_back(line);
+	void add (const source_line& line) {
+		contents_.push_back(line);
 		if (line.executable()) {
 			if (line.executed()) 
-				lines_executed++;
-			lines_total++;
+				lines_executed_++;
+			lines_total_++;
 			update_coverage();
 		}
 	}
 
 	void set_header(const std::string& tag, const std::string& value) {
 		if (tag == "Source") 
-			source_file = value;
+			source_file_ = value;
 		else if (tag == "Graph")
-			graph_file  = value;
+			graph_file_  = value;
 		else if (tag == "Data")
-			data_file   = value;
+			data_file_   = value;
 		else if (tag == "Runs")
-			runs        = detail::lexical_cast<int>(value);
+			runs_        = detail::lexical_cast<int>(value);
 		else if (tag == "Programs")
-			programs    = detail::lexical_cast<int>(value);
+			programs_    = detail::lexical_cast<int>(value);
 		else
 			return; // thru
 	}
 
-	std::string source(void) const {
-		return source_file;
+	std::string parse_file(void) const {
+		return parse_file_;
 	}
 
-	std::string graph(void) const {
-		return graph_file;
+	std::string source_file(void) const {
+		return source_file_;
 	}
 
-	std::string data(void) const {
-		return data_file;
+	std::string graph_file(void) const {
+		return graph_file_;
 	}
 
-	int executed_lines(void) const {
-		return lines_executed;
+	std::string data_file(void) const {
+		return data_file_;
 	}
 
-	int total_lines(void) const {
-		return lines_total;
+	int lines_executed(void) const {
+		return lines_executed_;
 	}
 
-	double coverage(void) const {
-		return line_coverage;
+	int lines_total(void) const {
+		return lines_total_;
 	}
 
-	const parsed_lines& all(void) const {
-		return contents;
+	double line_coverage(void) const {
+		return line_coverage_;
+	}
+
+	const source_lines& all(void) const {
+		return contents_;
 	}
 
 private:
-	std::string   parse_file;
-	std::string   source_file;
-	std::string   graph_file;
-	std::string   data_file;
-	int           runs;
-	int           programs;
-	int           lines_executed;
-	int           lines_total;
-	double        line_coverage;
-	parsed_lines  contents;
+	std::string   parse_file_;
+	std::string   source_file_;
+	std::string   graph_file_;
+	std::string   data_file_;
+	int           runs_;
+	int           programs_;
+	int           lines_executed_;
+	int           lines_total_;
+	double        line_coverage_;
+	source_lines  contents_;
 
 	void update_coverage(void) {
-		if (lines_total == 0)
+		if (lines_total_ == 0)
 			return;
-		line_coverage = 100.0 * lines_executed / lines_total;
+		line_coverage_ = 100.0 * lines_executed_ / lines_total_;
 	}
 };
 
 //-------------------------------------------------
-// parser/writer
+// parser/html-generator
 
+template<class InputStream>
 class parser {
 public:
-	parser(void) : is_header(true), is_error(false) {}
+	// [header] -:0:<tag>:<value>
+	// [body]   <execution_count>:<line_number>:<source line text>
+	typedef std::vector<std::string> line_t;
 
-	parser(const std::string& parse_file) : is_header(true), is_error(false), src(parse_file) {}
+	parser(const std::string& parse_file) : data_(parse_file), is_(parse_file.c_str()) {}
 
-	bool parse(const std::string& s) {
-		if (is_header_line(s)) {
-			if (is_header == false)
-				is_error = true;
-			parse_header(s);
-		} else {
-			is_header = false;
-			parse_content(s);
+	coverage_data parse() {
+		line_t line;
+
+		while (get_line(is_, line)) {
+			if (is_header_line(line))
+				parse_header(line);
+			else
+				parse_body(line);
 		}
-		return is_error;
-	}
-
-	parsed_source result(void) const {
-		if (is_error) {
-			throw std::domain_error("invalid result"); // throw if getting result from error state
-		}
-		return src;
-	}
-
-	bool error(void) const {
-		return is_error;
+			
+		return data_;
 	}
 
 private:
-	typedef std::vector<std::string> line_t;
+	bool get_line(InputStream& stream, line_t& line) {
+		std::string s;
 
-	bool is_header_line(const std::string& s) const {
-		return s.find(" 0:") != std::string::npos;
+		if (std::getline(stream, s)) {
+			line = detail::split(s, ':');
+			return true;
+		}
+		return false;
+	}
+
+	bool is_header_line(const line_t& line) const {
+		return line.size() == 4 && (line[1].find("0") != std::string::npos);
 	}
 
 	bool is_executable_line(const line_t& line) const {
@@ -231,130 +237,126 @@ private:
 		return detail::merge(line.begin() + 2, line.end(), ':');
 	}
 
-	void parse_header(const std::string& s) {
-		// -:0:<tag>:<value>
-		line_t line = detail::split(s, ':');
-
-		if (line.size() < 4) {
+	void parse_header(const line_t& line) {
+		if (line.size() < 4)
 			return;
-		}
 
-		std::string tag = line[2];
-		std::string value = line[3];
-
-		src.set_header(tag, value);
+		// -:0:<tag>:<value>
+		data_.set_header(line[2], line[3]);
 	}
 
-	void parse_content(const std::string& s) {
-		// <execution_count>:<line_number>:<source line text>
-		line_t line = detail::split(s, ':');
-
-		if (line.size() < 3) {
-			return; //thru
-		}
+	void parse_body(const line_t& line) {
+		if (line.size() < 3)
+			return;
 
 		if (is_executable_line(line)) {
-			src.add(parsed_line(get_line_number(line), get_source_line_text(line), get_execution_count(line)));
+			data_.add(source_line(get_line_number(line), get_source_line_text(line), get_execution_count(line)));
 		} else {
-			src.add(parsed_line(get_line_number(line), get_source_line_text(line)));
+			data_.add(source_line(get_line_number(line), get_source_line_text(line)));
 		}
 	}
 
-	bool is_header;
-	bool is_error;
-	parsed_source src;
+	coverage_data data_;
+	InputStream is_;
 };
 
-class detail_writer {
+template <class Content>
+class html_generator {
 public:
-	detail_writer(const parsed_source& src, const std::string& path) : src(src) {
-		fp = fopen(path.c_str(), "w");
+	html_generator(const char *filename) {
+		fp_ = fopen(filename, "w");
+		if (!fp_) 
+			throw std::invalid_argument("failed to open file");
 	}
 
-	~detail_writer(void) {
-		fclose(fp);
+	void write (const Content& c) {
+		write_common_header(page_title(c));
+		write_content(fp_, c); // template method
 	}
 
-	bool fail (void) const {
-		return fp == 0;
-	}
-
-	void write_header(void) {
-		write_header_tag(src.source());
-		write_summary(src);
-	}
-
-	void write_content(void) {
-		fprintf(fp, 
-			"<h1>Source</h1>"
-			"  <pre class=\"source\">");
-		for (parsed_lines::const_iterator it = src.all().begin(), end = src.all().end(); it != end; ++it) {
-			write_oneline(*it);
-		}
-		fprintf(fp, "</pre>");
-	}
-
-	void write_footer(void) {
-
+	~html_generator() {
+		fclose(fp_);
 	}
 
 private:
-	void write_header_tag(const std::string& source_file) {
-		fprintf(fp,
+	void write_common_header(const std::string& page_title) {
+		fprintf(fp_,
 			"<head>\n"
 			"  <meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">\n"
 			"  <title>gcov - %s</title>\n"
 			"  <link rel=\"stylesheet\" type=\"text/css\" href=\"gcov.css\">\n"
 			"</head>\n",
-			source_file.c_str());
+			page_title.c_str());
 	}
 
-	void write_summary(const parsed_source& src) {
+	virtual std::string page_title(const Content& c) = 0;
+	virtual void write_content(FILE *fp, const Content& c) = 0;
+
+	FILE *fp_;
+};
+
+class report_generator : public html_generator<coverage_data> {
+public:
+	report_generator(const std::string& path)
+		: html_generator<coverage_data>(path.c_str()) {}
+
+	void write_content(FILE *fp, const coverage_data& src) {
+		write_linecoverage_summary(fp, src);
+		write_annotated_source(fp, src);
+	}
+
+private:
+	std::string page_title(const coverage_data& cov) {
+		return cov.source_file();
+	}
+
+	void write_annotated_source(FILE *fp, const coverage_data& cov) {
+		fprintf(fp, 
+			"<h1>Source</h1>\n"
+			"  <pre class=\"source\">");
+		for (source_lines::const_iterator it = cov.all().begin(), end = cov.all().end(); it != end; ++it) 
+			write_oneline(fp, *it);
+
+		fprintf(fp, "</pre>");
+	}
+
+	void write_linecoverage_summary(FILE *fp, const coverage_data& cov) {
 		fprintf(fp,
 			"<h1>Summary</h1>\n"
 			"  <p>Lines executed:%d of %d (%.2f&#37;)</p>\n",
-			src.executed_lines(),
-			src.total_lines(),
-			src.coverage());
+			cov.lines_executed(),
+			cov.lines_total(),
+			cov.line_coverage());
 	}
 
-	void write_oneline(const parsed_line& line) {
+	void write_oneline(FILE *fp, const source_line& line) {
 		fprintf(fp,
 			"    <span class=\"lineNum\">%5d</span>%s%6s:%s%s\n",
 			line.number(),
 			line.executable() ? (line.executed() ? "<span class = \"lineCov\">" : "<span class = \"lineNoCov\">" ) : "",
 			line.exec_count().c_str(),
 			line.content().c_str(),
-			line.executable() ? "</span>" : ""			
-			);
+			line.executable() ? "</span>" : "");
 	}
-
-	parsed_source src;
-	FILE *fp;
 };
 
-class summary_writer {
+class summary_generator : public html_generator<std::vector<coverage_data> >{
 public:
-	typedef std::map<std::string, parsed_source> sources_t;
+	typedef std::vector<coverage_data> coverages_t;
 
-	summary_writer(const sources_t& src, const std::string& path) : src(src) {
-		fp = fopen(path.c_str(), "w");
+	summary_generator(const std::string& path)
+		: html_generator<std::vector<coverage_data> >(path.c_str()) {}
+
+	void write_content(FILE *fp, const coverages_t& coverages) {
+		write_coverages_summary(fp, coverages);
 	}
 
-	~summary_writer(void) {
-		fclose(fp);
+private:
+	std::string page_title(const coverages_t& coverages) {
+		return "summary";
 	}
 
-	void write_header(void) {
-		fprintf(fp,
-			"<head>\n"
-			"  <meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">\n"
-			"  <title>gcov - summary</title>\n"
-			"  <link rel=\"stylesheet\" type=\"text/css\" href=\"gcov.css\">\n"
-			"</head>\n");
-	}
-
-	void write_content(void) {
+	void write_coverages_summary(FILE *fp, const coverages_t& coverages) {
 		fprintf(fp,
 			"<table>\n"
 			"  <tr>\n"
@@ -362,9 +364,9 @@ public:
 			"    <th colspan=3>Line Coverage</th>\n"
 			"  </tr>\n");
 
-		for (sources_t::iterator it = src.begin(), end = src.end(); it != end; ++it) {
-			std::string html_file = (*it).first + ".html";
-			const parsed_source& s = (*it).second;
+		for (coverages_t::const_iterator it = coverages.begin(), end = coverages.end(); it != end; ++it) {
+			const coverage_data& cov = (*it);
+			std::string html_file = cov.source_file() + ".html";
 
 			fprintf(fp,
 				"  <tr>\n"
@@ -374,50 +376,34 @@ public:
 				"    <td>%d/%d</td>\n"
 				"  </tr>\n",
 				html_file.c_str(),
-				(*it).first.c_str(),
-				(int)(s.coverage()),
-				s.coverage(),
-				s.executed_lines(),
-				s.total_lines());
+				cov.source_file().c_str(),
+				(int)(cov.line_coverage()),
+				cov.line_coverage(),
+				cov.lines_executed(),
+				cov.lines_total());
 		}
 
-		fprintf(fp,
-			"</table>");
+		fprintf(fp, "</table>");
 	}
-
-	void write_footer(void) {
-
-	}
-
-private:
-	sources_t src;
-	FILE *fp;
 };
 
 //-------------------------------------------------
 // 
 
-/**
- * parse a content of .gcov file
- *
- * @param path filename
- */
-parsed_source parse (const char* path) {
-	std::ifstream ifs(path);
-	std::string input;
-	parser p(path);
+// parse a content of .gcov file
+coverage_data parse (const char* gcov_file_name) {
+	std::ifstream ifs(gcov_file_name);
+	parser<std::ifstream> p(gcov_file_name);
 
 	if (ifs.fail()) 
 		throw std::invalid_argument("failed to open");
 
-	while (std::getline(ifs, input))
-		p.parse(input);
-
-	return p.result();
+	return p.parse();
 }
 
-std::vector<parsed_source> parse (int num, const char *path[]) {
-	std::vector<parsed_source> sources;
+// parse contents of .gcov files
+std::vector<coverage_data> parse (int num, const char *path[]) {
+	std::vector<coverage_data> sources;
 
 	for (int i = 0; i < num; i++)
 		sources.push_back(parse(path[i]));
@@ -425,21 +411,25 @@ std::vector<parsed_source> parse (int num, const char *path[]) {
 	return sources;
 }
 
-/**
- * generage html report file from parsed_source
- *
- * @param src  report source
- * @param path output filename
- */
-void write(const parsed_source& src, const std::string& path) {
-	detail_writer w(src, path);
+// generage html report file from coverage_data
+void generate_coverage_report(const coverage_data& src, const std::string& path) {
+	report_generator w(path);
 
-	if (w.fail())
-		throw std::invalid_argument("failed to open");
+	w.write(src);
+}
 
-	w.write_header();
-	w.write_content();
-	w.write_footer();
+// generage html report file from coverage_data
+void generate_coverage_report(const coverage_data& coverage) {
+	const std::string path = detail::get_filebase(coverage.parse_file()) + ".html";
+
+	generate_coverage_report(coverage, path);
+}
+
+// generage html summary file from coverage_data array
+void generate_coverage_summary(const std::vector<coverage_data>& coverages, const std::string& path = "index.html") {
+	gcovh::summary_generator summary(path);
+
+	summary.write(coverages);
 }
 
 } // namespace gcovh

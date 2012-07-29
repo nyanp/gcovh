@@ -6,8 +6,8 @@ using namespace std;
 
 static int case_id = 0;
 
-template<typename T>
-bool equal (T a, T b) {
+template<typename InputStream>
+bool equal (InputStream a, InputStream b) {
 	return a == b;
 }
 
@@ -17,8 +17,8 @@ bool equal<double> (double a, double b) {
 }
 
 
-template<typename T>
-bool check (T result, T expected) {
+template<typename InputStream>
+bool check (InputStream result, InputStream expected) {
 	cout << "case #" << case_id++ << ":";
 
 	if (equal(expected, result)) 
@@ -33,25 +33,26 @@ bool check (T result, T expected) {
 
 
 int test1(void) {
-	gcovh::parser p;
+	std::string s = 
+		"        -:    0:Source:foo.c\n"
+		"        -:    0:Programs:1\n"
+		"        -:    1:#include <stdio.h>\n"
+		"        -:    2:\n"
+		"        1:    3:int main (void) {\n"
+		"        1:    4:    printf(\"foo\");\n"
+		"        1:    5:    return 0;\n"
+		"        -:    6:}\n";
 
-	p.parse("        -:    0:Source:foo.c");
-	p.parse("        -:    0:Programs:1");
-	p.parse("        -:    1:#include <stdio.h>");
-	p.parse("        -:    2:");
-	p.parse("        1:    3:int main (void) {");
-	p.parse("        1:    4:    printf(\"foo\");");
-	p.parse("        1:    5:    return 0;");
-	p.parse("        -:    6:}");
+	gcovh::parser<std::istringstream> p(s);
 
-	gcovh::parsed_source src = p.result();
+	gcovh::coverage_data src = p.parse();
 
-	TEST(src.coverage(), 100.0);
-	TEST(src.executed_lines(), 3);
-	TEST(src.total_lines(), 3);
-	TEST(src.source(), std::string("foo.c"));
+	TEST(src.line_coverage(), 100.0);
+	TEST(src.lines_executed(), 3);
+	TEST(src.lines_total(), 3);
+	TEST(src.source_file(), std::string("foo.c"));
 	
-	gcovh::parsed_lines lines = src.all();
+	gcovh::source_lines lines = src.all();
 
 	TEST((int)lines.size(), 6);
 	TEST(lines[0].executable(), false);
@@ -68,30 +69,31 @@ int test1(void) {
 	TEST(lines[4].exec_count(), std::string("1"));
 	TEST(lines[5].exec_count(), std::string("-"));
 
-	gcovh::write(src, "test1.out.html");
+	gcovh::generate_coverage_report(src, "test1.out.html");
 
 	return 0;
 }
 
 int test2(void) {
-	gcovh::parser p;
+	std::string s = 
+		 "        -:    0:Graph:foo.gcno\n"
+		 "        -:    0:Data:foo.gcda\n"
+		 "      100:    1:int foo (int n) {\n"
+		 "      100:    2:    if (n == 0)\n"
+		 "    #####:    3:        std::cout << \"foo\" std::endl;\n"
+		 "      100:    4:}\n";
 
-	p.parse("        -:    0:Graph:foo.gcno");
-	p.parse("        -:    0:Data:foo.gcda");
-	p.parse("      100:    1:int foo (int n) {");
-	p.parse("      100:    2:    if (n == 0)");
-	p.parse("    #####:    3:        std::cout << \"foo\" std::endl;");
-	p.parse("      100:    4:}");
+	gcovh::parser<std::istringstream> p(s);
 
-	gcovh::parsed_source src = p.result();
+	gcovh::coverage_data src = p.parse();
 
-	TEST(src.coverage(), 75.0);
-	TEST(src.executed_lines(), 3);
-	TEST(src.total_lines(), 4);
-	TEST(src.graph(), std::string("foo.gcno"));
-	TEST(src.data(), std::string("foo.gcda"));
+	TEST(src.line_coverage(), 75.0);
+	TEST(src.lines_executed(), 3);
+	TEST(src.lines_total(), 4);
+	TEST(src.graph_file(), std::string("foo.gcno"));
+	TEST(src.data_file(), std::string("foo.gcda"));
 	
-	gcovh::parsed_lines lines = src.all();
+	gcovh::source_lines lines = src.all();
 
 	TEST((int)lines.size(), 4);
 	TEST(lines[0].executable(), true);
@@ -104,39 +106,40 @@ int test2(void) {
 	TEST(lines[2].exec_count(), std::string("#####"));
 	TEST(lines[3].exec_count(), std::string("100"));
 
-	gcovh::write(src, "test2.out.html");
+	gcovh::generate_coverage_report(src, "test2.out.html");
 
 	return 0;
 }
 
 int test3(void) {
-	gcovh::parser p;
+	std::string s = 
+		"function main called 1 returned 100% blocks executed 86%\n"
+		"        1:    1:int main(void) {\n"
+		"        -:    2:    int i, total;\n"
+		"        1:    3:    total = 0;\n"
+		"       11:    4:    for (i = 0; i < 10; i++)\n"
+		"branch  0 taken 91%\n"
+		"branch  1 taken 9% (fallthrough)\n"
+		"       10:    5:        total += i;\n"
+		"        1:    6:    if (total != 45)\n"
+		"branch  0 taken 0% (fallthrough)\n"
+		"branch  1 taken 100%\n"
+		"    #####:    7:        printf(\"Failure\");\n"
+		"call    0 never executed\n"
+		"        -:    8:    else\n"
+		"        1:    9:        printf(\"Success\");\n"
+		"call    0 returned 100%\n"
+		"        1:   10:}\n";
 
-	p.parse("function main called 1 returned 100% blocks executed 86%");
-	p.parse("        1:    1:int main(void) {");
-	p.parse("        -:    2:    int i, total;");
-	p.parse("        1:    3:    total = 0;");
-	p.parse("       11:    4:    for (i = 0; i < 10; i++)");
-	p.parse("branch  0 taken 91%");
-	p.parse("branch  1 taken 9% (fallthrough)");
-	p.parse("       10:    5:        total += i;");
-	p.parse("        1:    6:    if (total != 45)");
-	p.parse("branch  0 taken 0% (fallthrough)");
-	p.parse("branch  1 taken 100%");
-	p.parse("    #####:    7:        printf(\"Failure\");");
-	p.parse("call    0 never executed");
-	p.parse("        -:    8:    else");
-	p.parse("        1:    9:        printf(\"Success\");");
-	p.parse("call    0 returned 100%");
-	p.parse("        1:   10:}");
+	gcovh::parser<std::istringstream> p(s);
 
-	gcovh::parsed_source src = p.result();
+	gcovh::coverage_data src = p.parse();
 
-	TEST(src.coverage(), 87.5);
-	TEST(src.executed_lines(), 7);
-	TEST(src.total_lines(), 8);
+	TEST(src.line_coverage(), 87.5);
+	TEST(src.lines_executed(), 7);
+	TEST(src.lines_total(), 8);
 
-	gcovh::write(src, "test3.out.html");
+	gcovh::generate_coverage_report(src, "test3.out.html");
 
 	return 0;
 }

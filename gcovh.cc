@@ -2,14 +2,16 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <sstream>
 
 void howto(void) {
 	std::cout << "gcovr - gcov html report generator" << std::endl;
 	std::cout << " gcov input-files" << std::endl;
 }
 
+using gcovh::coverage_data;
 
-typedef std::map<std::string, gcovh::parsed_source> sources_t;
+typedef std::vector<coverage_data> sources_t;
 
 int main (int argc, char *argv[]) {
 	if (argc < 2) {
@@ -20,16 +22,12 @@ int main (int argc, char *argv[]) {
 	sources_t sources;
 
 	for (int i = 1; i < argc; i++) {
-		sources[argv[i]] = gcovh::parse(argv[i]);
+		sources.push_back(gcovh::parse(argv[i]));
 	}
 
 	for (sources_t::iterator it = sources.begin(), end = sources.end(); it != end; ++it) {
-		gcovh::write((*it).second, (*it).first + ".html");
+		gcovh::generate_coverage_report((*it));
 	}
 
-	gcovh::summary_writer summary(sources, "index.html");
-
-	summary.write_header();
-	summary.write_content();
-	summary.write_footer();
+	gcovh::generate_coverage_summary(sources);
 }
