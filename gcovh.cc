@@ -19,15 +19,19 @@ int main (int argc, char *argv[]) {
 		return -1;
 	}
 
-	sources_t sources;
+	try {
+		sources_t sources;
 
-	for (int i = 1; i < argc; i++) {
-		sources.push_back(gcovh::parse(argv[i]));
+		for (int i = 1; i < argc; i++) {
+			sources.push_back(gcovh::parse(argv[i]));
+		}
+
+		for (sources_t::iterator it = sources.begin(), end = sources.end(); it != end; ++it) {
+			gcovh::generate_coverage_report((*it));
+		}
+		gcovh::generate_coverage_summary(sources);
+	} catch (std::exception& e) {
+		std::cout << e.what() << std::endl;
+		exit(-1);
 	}
-
-	for (sources_t::iterator it = sources.begin(), end = sources.end(); it != end; ++it) {
-		gcovh::generate_coverage_report((*it));
-	}
-
-	gcovh::generate_coverage_summary(sources);
 }
