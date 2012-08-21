@@ -310,7 +310,7 @@ private:
 		fprintf(fp_,
 			"<html>"
 			"<head>\n"
-			"  <meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">\n"
+			"  <meta http-equiv=\"Content-Type\" content=\"text/html\">\n"
 			"  <title>gcov - %s</title>\n"
 			"  <link rel=\"stylesheet\" type=\"text/css\" href=\"gcov.css\">\n"
 			"</head>\n"
