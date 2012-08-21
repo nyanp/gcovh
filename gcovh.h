@@ -96,8 +96,8 @@ public:
 	source_line(int line_number, const std::string& content, const std::string& execution_count)
 		: line_number_(line_number), is_executable_(true), content_(content), execution_count_(execution_count) {}
 
-	const std::string& exec_count(void) const {
-		return execution_count_;
+	const char* exec_count(void) const {
+		return execution_count_.c_str();
 	}
 
 	bool executable(void) const {
@@ -367,12 +367,15 @@ private:
 	}
 
 	void write_oneline(FILE *fp, const source_line& line) {
+		std::string content_escaped = detail::escape_for_html(line.content());
+		const char *str = content_escaped.c_str();
+
 		fprintf(fp,
 			"    <span class=\"lineNum\">%5d</span>%s%6s:%s%s\n",
 			line.number(),
 			line.executable() ? (line.executed() ? "<span class = \"lineCov\">" : "<span class = \"lineNoCov\">" ) : "",
-			line.exec_count().c_str(),
-			detail::escape_for_html(line.content()).c_str(),
+			line.exec_count(),
+			content_escaped.c_str(),
 			line.executable() ? "</span>" : "");
 	}
 };
