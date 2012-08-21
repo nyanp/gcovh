@@ -60,13 +60,13 @@ Targ lexical_cast (const Src& arg) {
 }
 
 std::string replace(std::string src, const std::string& targ, const std::string& repl) {
-	size_t i;
+	size_t i = 0;
 
 	if (targ.length() == 0)
 		return src;
 
 	while (true) {
-		i = src.find(targ);
+		i = src.find(targ, i);
 		if (i == std::string::npos) 
 			return src;
 		src.replace(i, targ.length(), repl);
@@ -433,7 +433,7 @@ coverage_data parse (const char* gcov_file_name) {
 	parser<std::ifstream> p(gcov_file_name);
 
 	if (ifs.fail()) 
-		throw std::invalid_argument("failed to open");
+		throw std::invalid_argument(std::string("failed to open file ") + gcov_file_name);
 
 	return p.parse();
 }
