@@ -12,6 +12,11 @@ bool equal (InputStream a, InputStream b) {
 }
 
 template<>
+bool equal (const char* a, const char* b) {
+	return strcmp(a, b) == 0;
+}
+
+template<>
 bool equal<double> (double a, double b) {
 	return std::abs(a - b) < 1E10;
 }
@@ -62,12 +67,12 @@ int test1(void) {
 	TEST(lines[4].executable(), true);
 	TEST(lines[5].executable(), false);
 
-	TEST(lines[0].exec_count(), std::string("-"));
-	TEST(lines[1].exec_count(), std::string("-"));
-	TEST(lines[2].exec_count(), std::string("1"));
-	TEST(lines[3].exec_count(), std::string("1"));
-	TEST(lines[4].exec_count(), std::string("1"));
-	TEST(lines[5].exec_count(), std::string("-"));
+	TEST(lines[0].exec_count(), "-");
+	TEST(lines[1].exec_count(), "-");
+	TEST(lines[2].exec_count(), "1");
+	TEST(lines[3].exec_count(), "1");
+	TEST(lines[4].exec_count(), "1");
+	TEST(lines[5].exec_count(), "-");
 
 	gcovh::generate_coverage_report(src, "test1.out.html");
 
@@ -101,10 +106,10 @@ int test2(void) {
 	TEST(lines[2].executable(), true);
 	TEST(lines[3].executable(), true);
 
-	TEST(lines[0].exec_count(), std::string("100"));
-	TEST(lines[1].exec_count(), std::string("100"));
-	TEST(lines[2].exec_count(), std::string("#####"));
-	TEST(lines[3].exec_count(), std::string("100"));
+	TEST(lines[0].exec_count(), "100");
+	TEST(lines[1].exec_count(), "100");
+	TEST(lines[2].exec_count(), "#####");
+	TEST(lines[3].exec_count(), "100");
 
 	gcovh::generate_coverage_report(src, "test2.out.html");
 
