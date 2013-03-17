@@ -244,7 +244,7 @@ private:
 	}
 
 	bool is_header_line(const line_t& line) const {
-		return line.size() == 4 && (line[1].find("0") != std::string::npos);
+		return line.size() >= 2 && get_line_number(line) == 0;
 	}
 
 	bool is_executable_line(const line_t& line) const {
