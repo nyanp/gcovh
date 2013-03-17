@@ -432,8 +432,8 @@ private:
 
 		for (coverages_t::const_iterator it = coverages.begin(), end = coverages.end(); it != end; ++it) {
 			const coverage_data& cov = (*it);
-			std::string html_file = cov.source_file() + ".html";
-
+			std::string html_file = detail::get_filebase(cov.parse_file()) + ".html";
+		
 			fprintf(fp,
 				"  <tr>\n"
 				"    <td><a href=\"%s\">%s</a></td>\n"
